@@ -1,6 +1,7 @@
 package com.example.authenticationService.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 @Entity
@@ -19,11 +20,14 @@ public class User {
     private Long id;
 
     @Column(nullable = false, unique = true)
+    @NotBlank(message = "Username is required")
     private String username;
 
     @Column(nullable = false, unique = true)
+    @NotBlank(message = "Email is required")
     private String email;
 
     @Column(nullable = false)
+    @NotBlank(message = "Password is required")
     private String password;
 }

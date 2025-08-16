@@ -1,7 +1,7 @@
 package com.example.authenticationService.service;
 
+import com.example.authenticationService.dto.AuthorizationResponse;
 import com.example.authenticationService.dto.SignupRequest;
-import com.example.authenticationService.dto.SignupResponse;
 import com.example.authenticationService.model.User;
 import com.example.authenticationService.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,16 +18,16 @@ public class AuthService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public SignupResponse signup(SignupRequest request) {
+    public AuthorizationResponse signup(SignupRequest request) {
         // Check if username/email already exists
         if (userRepository.existsByUsername(request.getUsername())) {
-            return new SignupResponse("Username already taken");
+            return new AuthorizationResponse("Username already taken");
         }
         if (userRepository.existsByEmail(request.getEmail())) {
-            return new SignupResponse("Email already taken");
+            return new AuthorizationResponse("Email already taken");
         }
 
-        // Create user
+        // Create User
         User user = User.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
@@ -36,6 +36,6 @@ public class AuthService {
 
         userRepository.save(user);
 
-        return new SignupResponse("User registered successfully");
+        return new AuthorizationResponse("User Registered Successfully");
     }
 }
