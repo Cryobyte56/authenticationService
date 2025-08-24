@@ -19,6 +19,14 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
+    @NotBlank(message = "First Name is required")
+    private String firstName;
+
+    @Column(nullable = false)
+    @NotBlank(message = "Last Name is required")
+    private String lastName;
+
     @Column(nullable = false, unique = true)
     @NotBlank(message = "Username is required")
     private String username;

@@ -10,7 +10,6 @@ public class AuthorizationResponse {
 
     //For Login
     private String token;
-    private String username;
 
     public AuthorizationResponse(String message) {
         this.message = message;

@@ -28,7 +28,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String path = request.getServletPath();
 
         //JWT Exemption for Login and Signup End Points
-        if (path.equals("/auth/login") || path.equals("/auth/signup") || path.equals("/auth/logout")) {
+        if (path.equals("/auth/login/**") || path.equals("/auth/signup/**") || path.equals("/auth/logout/**")) {
             filterChain.doFilter(request, response);
             return;
         }

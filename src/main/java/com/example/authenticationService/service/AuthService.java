@@ -21,10 +21,10 @@ public class AuthService {
     public AuthorizationResponse signup(SignupRequest request) {
         // Check if username/email already exists
         if (userRepository.existsByUsername(request.getUsername())) {
-            return new AuthorizationResponse("Username already taken");
+            return new AuthorizationResponse("Username Already Taken");
         }
         if (userRepository.existsByEmail(request.getEmail())) {
-            return new AuthorizationResponse("Email already taken");
+            return new AuthorizationResponse("Email Already Taken");
         }
 
         // Create User
