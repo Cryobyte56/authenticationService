@@ -7,6 +7,7 @@ import com.example.authenticationService.security.JwtTokenProvider;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -35,14 +36,16 @@ public class AuthController {
 
     //Sign-Up
     @PostMapping("/signup")
-    public AuthorizationResponse signup(@Validated @RequestBody SignupRequest request) {
+    public ResponseEntity<AuthorizationResponse> signup(@Validated @RequestBody SignupRequest request) {
 
         // Duplicate Checker
         if (userRepository.existsByUsername(request.getUsername())) {
-            return new AuthorizationResponse("Username Already Exists");
+            AuthorizationResponse response = new AuthorizationResponse("Username Already Exists");
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
         }
         if (userRepository.existsByEmail(request.getEmail())) {
-            return new AuthorizationResponse("Email Already Exists");
+            AuthorizationResponse response = new AuthorizationResponse("Email Already Exists");
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
         }
 
         // Create User
@@ -55,31 +58,46 @@ public class AuthController {
 
         userRepository.save(user);
 
-        return new AuthorizationResponse("User Registered Successfully!");
+        AuthorizationResponse response = new AuthorizationResponse("User Registered Successfully!");
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    //Login
+    // Login
     @PostMapping("/login")
-    public AuthorizationResponse login(@Validated @RequestBody LoginRequest request) {
+    public ResponseEntity<AuthorizationResponse> login(@Validated @RequestBody LoginRequest request) {
+        final String invalidMsg = "Invalid Username or Password";
+
         Optional<User> userOpt = userRepository.findByUsername(request.getUsername());
         if (userOpt.isEmpty()) {
-            return new AuthorizationResponse("Invalid Username or Password");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new AuthorizationResponse(invalidMsg));
         }
 
         User user = userOpt.get();
 
-        //Incorrect Password
+        // Wrong Password
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            return new AuthorizationResponse("Invalid Username or Password");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new AuthorizationResponse(invalidMsg));
         }
 
-        //Generate Token
-        String token = generateToken(user.getUsername());
+        //Forbid Users That Ain't Active
+        if (user.getStatus() == User.UserStatus.SUSPENDED) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new AuthorizationResponse("Account is Suspended"));
+        }
+        if (user.getStatus() == User.UserStatus.PENDING) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new AuthorizationResponse("Account is not yet activated"));
+        }
 
-        return new AuthorizationResponse("Login Successful!", token);
+        // Success
+        String token = generateToken(user.getUsername());
+        return ResponseEntity.ok(new AuthorizationResponse("Login Successful", token));
     }
 
-    //Authenticated User Endpoint to Return Username and Email
+
+    //Authenticated User Endpoint to Return Username, Email, First Name, and Last Name
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentUser(Authentication authentication) {
 

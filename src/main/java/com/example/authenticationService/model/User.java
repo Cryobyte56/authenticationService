@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
+import java.time.Instant;
+
 @Entity
 @Table(name = "users")
 
@@ -14,6 +16,8 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class User {
+
+    public enum UserStatus { PENDING, ACTIVE, SUSPENDED }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,4 +42,11 @@ public class User {
     @Column(nullable = false)
     @NotBlank(message = "Password is required")
     private String password;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private UserStatus status = UserStatus.PENDING;
+
+    @Column
+    private Instant emailVerifiedAt;
 }

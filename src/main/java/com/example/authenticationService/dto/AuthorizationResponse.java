@@ -12,6 +12,7 @@ public class AuthorizationResponse {
     private String token;
 
     public AuthorizationResponse(String message) {
+
         this.message = message;
     }
 }
