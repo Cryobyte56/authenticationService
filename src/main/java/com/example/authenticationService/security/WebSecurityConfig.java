@@ -39,7 +39,7 @@ public class WebSecurityConfig {
         http
                 .csrf(csrf -> csrf.disable()) // For Postman Testing Only (Remove for Actual Use)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/signup", "/auth/login", "/auth/logout").permitAll() // Public Endpoints
+                        .requestMatchers("/auth/signup", "/auth/login", "/auth/logout", "/auth/verify-otp", "/auth/resend-otp").permitAll() // Public Endpoints
                         .anyRequest().authenticated() // The Rest, Lock It
                 ).addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);;
         return http.build();

@@ -4,8 +4,14 @@ import com.example.authenticationService.dto.*;
 import com.example.authenticationService.model.User;
 import com.example.authenticationService.repository.UserRepository;
 import com.example.authenticationService.security.JwtTokenProvider;
+import com.example.authenticationService.service.OtpService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +21,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
 import java.util.Optional;
@@ -23,16 +30,18 @@ import static com.example.authenticationService.security.JwtTokenProvider.genera
 
 @RestController
 @RequestMapping("/auth")
+@RequiredArgsConstructor
 public class AuthController {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private JwtTokenProvider jwtTokenProvider;
+    private final JwtTokenProvider jwtTokenProvider;
+
+    private final OtpService otpService;
+
+    //-----------------------------SIGN-UP-----------------------------//
 
     //Sign-Up
     @PostMapping("/signup")
@@ -55,14 +64,46 @@ public class AuthController {
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setStatus(User.UserStatus.PENDING);
 
         userRepository.save(user);
 
-        AuthorizationResponse response = new AuthorizationResponse("User Registered Successfully!");
+        otpService.createAndSendSignupOtp(user);
+
+        AuthorizationResponse response = new AuthorizationResponse("User Registered. Verification Email Sent!");
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    // Login
+    @PostMapping("/verify-otp")
+    public ResponseEntity<AuthorizationResponse> verifyOtp(@Validated @RequestBody VerifyOtpRequest req) {
+        User email = userRepository.findByEmail(req.getEmail())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Email not found"));
+
+        if (email.getStatus() == User.UserStatus.ACTIVE) {
+            return ResponseEntity.ok(new AuthorizationResponse("Already verified."));
+        }
+
+        otpService.verifySignupOtp(email, req.getCode());
+        return ResponseEntity.ok(new AuthorizationResponse("Email verified. Account activated."));
+    }
+
+    @PostMapping("/resend-otp")
+    public ResponseEntity<AuthorizationResponse> resendOtp(@Validated @RequestBody ResendOtpRequest req) {
+        User user = userRepository.findByEmail(req.getEmail())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User Not Found"));
+
+        if (user.getStatus() == User.UserStatus.ACTIVE) {
+            return ResponseEntity.badRequest().body(new AuthorizationResponse("User is Already Verified."));
+        }
+
+        otpService.resendSignupOtp(user);
+        return ResponseEntity.ok(new AuthorizationResponse("Verification Code Re-Sent."));
+    }
+
+
+    //-----------------------------LOGIN-----------------------------//
+
+    // Login Endpoint
     @PostMapping("/login")
     public ResponseEntity<AuthorizationResponse> login(@Validated @RequestBody LoginRequest request) {
         final String invalidMsg = "Invalid Username or Password";
@@ -95,7 +136,6 @@ public class AuthController {
         String token = generateToken(user.getUsername());
         return ResponseEntity.ok(new AuthorizationResponse("Login Successful", token));
     }
-
 
     //Authenticated User Endpoint to Return Username, Email, First Name, and Last Name
     @GetMapping("/me")
