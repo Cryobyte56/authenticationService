@@ -49,4 +49,7 @@ public class User {
 
     @Column
     private Instant emailVerifiedAt;
+
+    @Enumerated(EnumType.STRING)
+    private AuthProvider provider;
 }

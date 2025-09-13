@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -35,13 +36,22 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, CustomOAuth2SuccessHandler successHandler) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // For Postman Testing Only (Remove for Actual Use)
+                // For Testing Only (CONFIGURE for Actual Use)
+                .csrf(csrf -> csrf.disable()) //ENABLE in Production
+                .csrf(AbstractHttpConfigurer::disable) //ENABLE in Production
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/signup", "/auth/login", "/auth/logout", "/auth/verify-otp", "/auth/resend-otp").permitAll() // Public Endpoints
+                        .requestMatchers(
+                                "/auth/**",          // Signup and Login/Google Endpoints
+                                "/oauth2/authorization/**",   // Entrypoint for Google Login
+                                "/login/oauth2/code/**"       // Google Callback
+                        ).permitAll() // Public Endpoints
                         .anyRequest().authenticated() // The Rest, Lock It
-                ).addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);;
+                )
+                //Allow Google OAuth
+                .oauth2Login(oauth -> oauth.successHandler(successHandler))
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 

@@ -4,6 +4,7 @@ import com.example.authenticationService.model.OtpPurpose;
 import com.example.authenticationService.model.OtpToken;
 import com.example.authenticationService.model.User;
 import com.example.authenticationService.repository.OtpTokenRepository;
+import com.example.authenticationService.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -23,13 +24,32 @@ public class OtpService {
     private final OtpTokenRepository otpRepo;
     private final PasswordEncoder passwordEncoder;
     private final MailService mailService;
+    private final UserRepository userRepository;
 
     public OtpService(OtpTokenRepository otpRepo,
                       PasswordEncoder passwordEncoder,
-                      MailService mailService) {
+                      MailService mailService, UserRepository userRepository) {
         this.otpRepo = otpRepo;
         this.passwordEncoder = passwordEncoder;
         this.mailService = mailService;
+        this.userRepository = userRepository;
+    }
+
+    @Transactional
+    public void verifyOtp(String email, String code) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("Email not found"));
+
+        if (user.getStatus() == User.UserStatus.ACTIVE) {
+            throw new IllegalStateException("Already verified.");
+        }
+
+        // Verify OTP Code
+        verifySignupOtp(user, code);
+
+        // If OTP Passed, Activate User
+        user.setStatus(User.UserStatus.ACTIVE);
+        userRepository.save(user);
     }
 
     @Transactional
@@ -38,7 +58,7 @@ public class OtpService {
         otpRepo.findTopByUserIdAndPurposeAndConsumedAtIsNullOrderByCreatedAtDesc(user.getId(), OtpPurpose.SIGNUP)
                 .ifPresent(latest -> {
                     if (Duration.between(latest.getLastSentAt(), Instant.now()).compareTo(RESEND_COOLDOWN) < 0) {
-                        throw new IllegalStateException("Please wait before requesting another code.");
+                        throw new IllegalStateException("Please Wait Before Requesting Another Code.");
                     }
                 });
 
@@ -56,7 +76,7 @@ public class OtpService {
         token.setLastSentAt(Instant.now());
         otpRepo.save(token);
 
-        // DEV NOTE: do NOT log the code in prod. For Postman-only testing, the email is your source of truth.
+        // DEV NOTE: do NOT log the code in prod. For Postman-only testing.
         mailService.sendOtpEmail(user.getEmail(), code);
     }
 
@@ -82,7 +102,7 @@ public class OtpService {
 
         if (token.getAttempts() >= MAX_ATTEMPTS) throw new IllegalStateException("Too many attempts. Request a new code.");
 
-        // increment attempts regardless of outcome
+        // Increment Attempts
         token.setAttempts(token.getAttempts() + 1);
 
         if (!passwordEncoder.matches(code, token.getOtpHash())) {
@@ -90,7 +110,7 @@ public class OtpService {
             throw new IllegalArgumentException("Invalid code.");
         }
 
-        // success: consume token + activate user
+        // SUCCESS: Consume Token and Activate User
         token.setConsumedAt(Instant.now());
         otpRepo.save(token);
 
@@ -99,7 +119,7 @@ public class OtpService {
     }
 
     private String generateNumericCode() {
-        // 000000–999999 with leading zeros
+        // 000000–999999 With Leading Zeros
         int num = random.nextInt(1_000_000);
         return String.format("%06d", num);
     }
