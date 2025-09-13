@@ -1,10 +1,16 @@
 # Spring Boot Login & Registration
 
 A clean, generic login/registration system built with:
-- Spring Boot
-- Maven
-- MySQL
-- Hibernate/JPA
+- **Backend Framework**: Spring Boot 3 (REST APIs, Dependency Injection)
+- **Build Tool**: Maven
+- **Database**: MySQL with Hibernate/JPA ORM
+- **Authentication**:
+  - Spring Security (JWT-Based Authentication & Authorization)
+  - Google OAuth 2.0 (via Spring Security OAuth2 Client)
+- **Persistence Layer**: JPA Repositories with transactional services
+- **Other**:
+  - Custom OAuth2 Success Handler (Google Login Auto-Registration)
+  - Password Hashing with BCrypt
 
 ## Setup
 1. Clone repo
