@@ -1,9 +1,11 @@
 package com.example.authenticationService.exception;
 
-import com.example.authenticationService.dto.AuthorizationResponse;
+import com.example.authenticationService.dto.response.AuthorizationResponse;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import static com.example.authenticationService.common.constants.StringsGlobal.Error.*;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -15,7 +17,7 @@ public class GlobalExceptionHandler {
                 .stream()
                 .map(error -> error.getDefaultMessage())
                 .findFirst()
-                .orElse("Invalid Input");
+                .orElse(INV_INPUT);
         return new AuthorizationResponse(errorMessage);
     }
 }

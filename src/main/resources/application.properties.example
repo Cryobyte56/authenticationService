@@ -15,7 +15,6 @@ spring.mail.host=smtp.gmail.com
 spring.mail.port=587
 spring.mail.username=YOUR_EMAIL
 spring.mail.password=YOUR_APP_PASS
-
 spring.mail.properties.mail.smtp.auth=true
 spring.mail.properties.mail.smtp.starttls.enable=true
 
@@ -26,7 +25,14 @@ spring.security.oauth2.client.registration.google.scope=openid,profile,email
 spring.security.oauth2.client.registration.google.redirect-uri={baseUrl}/login/oauth2/code/google
 spring.security.oauth2.client.registration.google.client-name=Google
 
-#Frontend Redirection - Modify This According to Your Frontend's End Point
+#Frontend Redirection - Modify this according to your frontend's end point
 app.frontend.success-url=http://localhost:3000/auth/success?token=
+app.auth.google.authorization-uri=/oauth2/authorization/google
+
+#Authentication
+auth.otp.expiration-minutes=10
+spring.messages.basename=i18n/messages
+spring.messages.encoding=UTF-8
+
 
 

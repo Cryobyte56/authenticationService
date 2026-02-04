@@ -6,6 +6,8 @@ import lombok.*;
 
 import java.time.Instant;
 
+import static com.example.authenticationService.common.constants.StringsGlobal.Auth.*;
+
 @Entity
 @Table(name = "users")
 
@@ -24,23 +26,23 @@ public class User {
     private Long id;
 
     @Column(nullable = false)
-    @NotBlank(message = "First Name is required")
+    @NotBlank(message = SIGNUP_FNAME_REQ)
     private String firstName;
 
     @Column(nullable = false)
-    @NotBlank(message = "Last Name is required")
+    @NotBlank(message = SIGNUP_LNAME_REQ)
     private String lastName;
 
     @Column(nullable = false, unique = true)
-    @NotBlank(message = "Username is required")
+    @NotBlank(message = UNAME_REQUIRED)
     private String username;
 
     @Column(nullable = false, unique = true)
-    @NotBlank(message = "Email is required")
+    @NotBlank(message = SIGNUP_EMAIL_REQ)
     private String email;
 
     @Column(nullable = false)
-    @NotBlank(message = "Password is required")
+    @NotBlank(message = PASS_REQUIRED)
     private String password;
 
     @Enumerated(EnumType.STRING)
