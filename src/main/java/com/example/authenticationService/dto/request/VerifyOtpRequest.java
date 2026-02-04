@@ -1,4 +1,4 @@
-package com.example.authenticationService.dto;
+package com.example.authenticationService.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -10,5 +10,7 @@ public class VerifyOtpRequest {
     @Email
     @NotBlank
     private String email;
-    @NotBlank @Size(min = 6, max = 6) private String code;
+
+    @NotBlank @Size(min = 6, max = 6)
+    private String code;
 }

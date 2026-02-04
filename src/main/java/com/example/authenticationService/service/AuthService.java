@@ -1,41 +1,26 @@
 package com.example.authenticationService.service;
 
-import com.example.authenticationService.dto.AuthorizationResponse;
-import com.example.authenticationService.dto.SignupRequest;
+import com.example.authenticationService.dto.request.LoginRequest;
+import com.example.authenticationService.dto.request.ResendOtpRequest;
+import com.example.authenticationService.dto.request.SignupRequest;
+import com.example.authenticationService.dto.request.VerifyOtpRequest;
 import com.example.authenticationService.model.User;
-import com.example.authenticationService.repository.UserRepository;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
+import org.springframework.security.core.Authentication;
 
-@Service
-public class AuthService {
+import java.util.Map;
+import java.util.Optional;
 
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
+public interface AuthService {
 
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-    }
+    public Optional<User> findByEmail(String email);
+    public void signupValidate(SignupRequest request);
+    public void signupSave(SignupRequest request);
 
-    public AuthorizationResponse signup(SignupRequest request) {
-        // Check if username/email already exists
-        if (userRepository.existsByUsername(request.getUsername())) {
-            return new AuthorizationResponse("Username Already Taken");
-        }
-        if (userRepository.existsByEmail(request.getEmail())) {
-            return new AuthorizationResponse("Email Already Taken");
-        }
+    public String login(LoginRequest request);
+    public Map<String, Object> getCurrentUser(Authentication authentication);
+    public void logout();
 
-        // Create User
-        User user = User.builder()
-                .username(request.getUsername())
-                .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .build();
-
-        userRepository.save(user);
-
-        return new AuthorizationResponse("User Registered Successfully");
-    }
+    //Google
+    public String getGoogleAuthRedirectUrl();
+    public User registerGoogleUser(String email, String firstName, String lastName);
 }
